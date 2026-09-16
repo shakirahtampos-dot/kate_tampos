@@ -131,10 +131,10 @@ function get_logged_in_user()
     }
 
     return [
-        'id' => $_SESSION['user_id'],
-        'name' => $_SESSION['user_name'],
-        'email' => $_SESSION['user_email'],
-        'role' => $_SESSION['user_role']
+        'id' => $_SESSION['user_id'] ?? null,
+        'name' => $_SESSION['user_name'] ?? '',
+        'email' => $_SESSION['user_email'] ?? '',
+        'role' => $_SESSION['user_role'] ?? ''
     ];
 }
 
@@ -163,7 +163,8 @@ function remember_user($user_id) {
     );
 }
 
-function auto_login() {
+    function auto_login()
+{
     global $conn;
 
     if (is_logged_in() || empty($_COOKIE["remember_token"])) {
@@ -197,6 +198,5 @@ function auto_login() {
         setcookie("remember_token", "", time() - 3600, "/");
     }
 }
-
-auto_login();
-?>
+    auto_login();
+    ?>

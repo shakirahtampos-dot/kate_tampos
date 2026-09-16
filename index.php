@@ -46,7 +46,7 @@ foreach ($_SESSION['cart'] as $item) {
 }
 
 ?>
-```
+
 
 
 <!DOCTYPE html>
