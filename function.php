@@ -5,8 +5,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-
 function register_user($full_name, $email, $password)
 {
     global $conn;
@@ -58,7 +56,7 @@ function login_user($email, $password)
 
     $email = trim($email);
 
-    $stmt = mysqli_prepare($conn, "SELECT id, full_name, email, password FROM users WHERE email = ?");
+    $stmt = mysqli_prepare($conn, "SELECT id, full_name, email, password, role FROM users WHERE email = ?");
     mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
 
@@ -78,6 +76,7 @@ function login_user($email, $password)
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_name'] = $user['full_name'];
     $_SESSION['user_email'] = $user['email'];
+    $_SESSION['user_role'] = $user['role'];
 
     return true;
 }
@@ -117,8 +116,8 @@ function get_logged_in_user()
     return [
         'id' => $_SESSION['user_id'],
         'name' => $_SESSION['user_name'],
-        'email' => $_SESSION['user_email']
+        'email' => $_SESSION['user_email'],
+        'role' => $_SESSION['user_role']
     ];
 }
-
 ?>

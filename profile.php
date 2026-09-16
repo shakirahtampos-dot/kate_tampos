@@ -186,9 +186,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
 
             <div class="profile-actions">
-                <a href="index.php" class="profile-cancel">Cancel</a>
-                <button type="submit" class="profile-save">Save Changes</button>
-            </div>
+    <a href="index.php" class="profile-cancel">Back to Home</a>
+    <button type="submit" class="profile-save">Save Changes</button>
+</div>
 
         </form>
 

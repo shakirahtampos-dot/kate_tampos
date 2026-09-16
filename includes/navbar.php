@@ -45,6 +45,7 @@ if ($logged_in) {
              'Completed',
              'Cancelled'
          )
+         AND notification_read = 0
          ORDER BY created_at DESC
          LIMIT 10"
     );
@@ -66,7 +67,7 @@ if ($logged_in) {
 
     <div class="nav-container">
 
-        <a href="index.php" class="brand">
+        <a href="/kate-goodies-website/index.php" class="brand">
             <span class="logo-mark">Kates</span>
             <span class="brand-name">Kates <span>Goodies</span></span>
         </a>
@@ -136,7 +137,7 @@ if ($logged_in) {
                                     ?>
 
                                     <a
-                                        href="order_details.php?id=<?= (int) $notification["id"] ?>"
+                                        href="notification_read.php?id=<?= (int) $notification["id"] ?>"
                                         class="notification-item"
                                     >
 

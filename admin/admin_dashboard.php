@@ -1,17 +1,17 @@
 <?php
 session_start();
-require_once  './db/config.php';
-require_once  "/function.php";
+require_once __DIR__ . "/../db/config.php";
+require_once __DIR__ . "/../function.php";
 
 if (!is_logged_in()) {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit;
 }
 
 $user = get_logged_in_user();
 
 if ($user['role'] !== 'admin') {
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -34,15 +34,7 @@ foreach (['pending' => 'Pending', 'approved' => 'Approved', 'completed' => 'Comp
     mysqli_stmt_close($stmt);
 }
 
-$query = "
-    SELECT orders.id, orders.full_name, orders.email, orders.phone,
-           orders.payment_method, orders.total_amount, orders.status,
-           orders.created_at
-    FROM orders
-    ORDER BY orders.created_at DESC
-";
-
-$result = mysqli_query($conn, $query);
+$result = mysqli_query($conn, "SELECT id, user_id, total_amount, status, created_at FROM orders ORDER BY created_at DESC");
 
 if (!$result) {
     die("Failed to retrieve orders: " . mysqli_error($conn));
@@ -61,7 +53,8 @@ while ($order = mysqli_fetch_assoc($result)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Kates Goodies</title>
-    <link rel="stylesheet" href="./css/admin.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
 
@@ -73,7 +66,8 @@ while ($order = mysqli_fetch_assoc($result)) {
             <h1>Orders Dashboard</h1>
             <p>Manage customer orders for Kates Goodies.</p>
         </div>
-        <a href="index.php" class="admin-back">Back to Website</a>
+
+        <a href="../index.php" class="admin-back">Back to Website</a>
     </div>
 
     <div class="admin-stats">
@@ -81,18 +75,22 @@ while ($order = mysqli_fetch_assoc($result)) {
             <span>Total Orders</span>
             <strong><?= $counts['total'] ?></strong>
         </div>
+
         <div class="admin-stat">
             <span>Pending</span>
             <strong><?= $counts['pending'] ?></strong>
         </div>
+
         <div class="admin-stat">
             <span>Approved</span>
             <strong><?= $counts['approved'] ?></strong>
         </div>
+
         <div class="admin-stat">
             <span>Completed</span>
             <strong><?= $counts['completed'] ?></strong>
         </div>
+
         <div class="admin-stat">
             <span>Cancelled</span>
             <strong><?= $counts['cancelled'] ?></strong>
@@ -100,6 +98,7 @@ while ($order = mysqli_fetch_assoc($result)) {
     </div>
 
     <div class="admin-orders">
+
         <div class="admin-section-header">
             <h2>Customer Orders</h2>
             <span><?= count($orders) ?> orders</span>
@@ -115,13 +114,13 @@ while ($order = mysqli_fetch_assoc($result)) {
         <?php else: ?>
 
             <div class="admin-table-wrapper">
+
                 <table class="admin-table">
+
                     <thead>
                         <tr>
                             <th>Order</th>
-                            <th>Customer</th>
-                            <th>Contact</th>
-                            <th>Payment</th>
+                            <th>User ID</th>
                             <th>Total</th>
                             <th>Status</th>
                             <th>Date</th>
@@ -130,18 +129,17 @@ while ($order = mysqli_fetch_assoc($result)) {
                     </thead>
 
                     <tbody>
-                        <?php foreach ($orders as $order): ?>
-                            <tr>
-                                <td><strong>#<?= (int) $order['id'] ?></strong></td>
 
+                        <?php foreach ($orders as $order): ?>
+
+                            <tr>
                                 <td>
-                                    <strong><?= htmlspecialchars($order['full_name']) ?></strong>
-                                    <small><?= htmlspecialchars($order['email']) ?></small>
+                                    <strong>#<?= (int) $order['id'] ?></strong>
                                 </td>
 
-                                <td><?= htmlspecialchars($order['phone']) ?></td>
-
-                                <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                                <td>
+                                    User #<?= (int) $order['user_id'] ?>
+                                </td>
 
                                 <td>
                                     <strong>₱<?= number_format($order['total_amount'], 2) ?></strong>
@@ -153,7 +151,9 @@ while ($order = mysqli_fetch_assoc($result)) {
                                     </span>
                                 </td>
 
-                                <td><?= htmlspecialchars($order['created_at']) ?></td>
+                                <td>
+                                    <?= htmlspecialchars($order['created_at']) ?>
+                                </td>
 
                                 <td>
                                     <a href="admin_order_details.php?id=<?= (int) $order['id'] ?>" class="admin-view-button">
@@ -161,12 +161,17 @@ while ($order = mysqli_fetch_assoc($result)) {
                                     </a>
                                 </td>
                             </tr>
+
                         <?php endforeach; ?>
+
                     </tbody>
+
                 </table>
+
             </div>
 
         <?php endif; ?>
+
     </div>
 
 </div>

@@ -80,6 +80,10 @@ mysqli_stmt_close($stmt);
 <div class="orders-container">
 
     <h1>My Orders</h1>
+    <div class="orders-header">
+    
+    <a href="index.php" class="back-home">← Back to Home</a>
+</div>
 
     <?php if (empty($orders)): ?>
 

@@ -61,7 +61,7 @@ foreach ($_SESSION['cart'] as $item) {
 
 <nav class="navbar">
     <div class="nav-container">
-        <a href="#" class="brand">
+        <a href="index.php" class="brand">
             <span class="logo-mark">Kates</span>
             <span class="brand-name">Kates <span>Goodies</span></span>
         </a>
@@ -101,6 +101,7 @@ foreach ($_SESSION['cart'] as $item) {
                      FROM orders
                      WHERE user_id = ?
                      AND status IN ('Approved', 'Ready for Pickup', 'Picked Up', 'Completed', 'Cancelled')
+                     AND notification_read = 0
                      ORDER BY created_at DESC
                      LIMIT 10"
                 );
@@ -142,10 +143,10 @@ foreach ($_SESSION['cart'] as $item) {
                     $notification_message = $messages[$status] ?? "Your order status has been updated.";
                     ?>
 
-                    <a
-                        href="order_details.php?id=<?= (int) $notification["id"] ?>"
-                        class="notification-item"
-                    >
+                                <a
+                    href="order_details.php?id=<?= (int) $notification["id"] ?>"
+                    class="notification-item"
+                >
                         <div class="notification-icon">
                             🔔
                         </div>

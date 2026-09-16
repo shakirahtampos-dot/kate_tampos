@@ -1,6 +1,4 @@
-```php
 <?php
-
 session_start();
 
 require_once "function.php";
@@ -24,12 +22,17 @@ if ($validation !== true) {
 $result = login_user($email, $password);
 
 if ($result === true) {
-    header("Location: index.php");
+    $user = get_logged_in_user();
+
+    if ($user && $user["role"] === "admin") {
+        header("Location: ./admin/admin_dashboard.php");
+    } else {
+        header("Location: index.php");
+    }
+
     exit;
 }
 
 header("Location: login.php?error=" . urlencode($result));
 exit;
-
 ?>
-```

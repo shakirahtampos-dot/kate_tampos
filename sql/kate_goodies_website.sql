@@ -75,3 +75,14 @@ ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'customer';
 UPDATE users
 SET role = 'admin'
 WHERE email = 'YOUR_EMAIL_HERE';
+
+
+/*for order delivery address*/
+
+ALTER TABLE orders
+ADD COLUMN delivery_address TEXT NOT NULL AFTER user_id;
+
+/*for notification badge*/
+
+ALTER TABLE orders
+ADD COLUMN notification_read TINYINT(1) NOT NULL DEFAULT 0;
