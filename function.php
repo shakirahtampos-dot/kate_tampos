@@ -77,7 +77,8 @@ function login_user($email, $password)
     $_SESSION['user_name'] = $user['full_name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
-
+    
+    remember_user($user["id"]);
     return true;
 }
 
@@ -86,8 +87,24 @@ function is_logged_in()
     return isset($_SESSION['user_id']);
 }
 
-function logout_user()
-{
+function logout_user() {
+    global $conn;
+
+    if (isset($_SESSION["user_id"])) {
+        $user_id = $_SESSION["user_id"];
+
+        $stmt = mysqli_prepare(
+            $conn,
+            "UPDATE users SET remember_token = NULL WHERE id = ?"
+        );
+
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    setcookie("remember_token", "", time() - 3600, "/");
+
     $_SESSION = [];
 
     if (ini_get("session.use_cookies")) {
@@ -95,7 +112,7 @@ function logout_user()
 
         setcookie(
             session_name(),
-            '',
+            "",
             time() - 42000,
             $params["path"],
             $params["domain"],
@@ -120,4 +137,66 @@ function get_logged_in_user()
         'role' => $_SESSION['user_role']
     ];
 }
+
+function remember_user($user_id) {
+    global $conn;
+
+    $token = bin2hex(random_bytes(32));
+
+    $stmt = mysqli_prepare(
+        $conn,
+        "UPDATE users SET remember_token = ? WHERE id = ?"
+    );
+
+    mysqli_stmt_bind_param($stmt, "si", $token, $user_id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    setcookie(
+        "remember_token",
+        $token,
+        time() + (60 * 60 * 24 * 30),
+        "/",
+        "",
+        false,
+        true
+    );
+}
+
+function auto_login() {
+    global $conn;
+
+    if (is_logged_in() || empty($_COOKIE["remember_token"])) {
+        return;
+    }
+
+    $token = $_COOKIE["remember_token"];
+
+    $stmt = mysqli_prepare(
+        $conn,
+        "SELECT id, full_name, email, role
+         FROM users
+         WHERE remember_token = ?
+         LIMIT 1"
+    );
+
+    mysqli_stmt_bind_param($stmt, "s", $token);
+    mysqli_stmt_execute($stmt);
+
+    $result = mysqli_stmt_get_result($stmt);
+    $user = mysqli_fetch_assoc($result);
+
+    mysqli_stmt_close($stmt);
+
+    if ($user) {
+        $_SESSION["user_id"] = $user["id"];
+        $_SESSION["user_name"] = $user["full_name"];
+        $_SESSION["user_email"] = $user["email"];
+        $_SESSION["user_role"] = $user["role"];
+    } else {
+        setcookie("remember_token", "", time() - 3600, "/");
+    }
+}
+
+auto_login();
 ?>
