@@ -1,4 +1,4 @@
-```php
+
 <?php
 
 $error = $_GET["error"] ?? "";
@@ -91,4 +91,4 @@ $registered = isset($_GET["registered"]);
 
 </body>
 </html>
-```
+

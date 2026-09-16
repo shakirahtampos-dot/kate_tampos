@@ -1,29 +1,23 @@
-<?php
-$navLinks = ['Menu', 'About', 'Order','Login'];
 
-$products = [
-    [
-        'name' => 'Butter Croissant',
-        'desc' => 'Laminated with cultured butter, 72-hour cold proof, flaky on the outside — impossibly soft within.',
-        'price' => '$4.50',
-        'tag' => 'Bestseller',
-        'img' => 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&h=700&fit=crop&auto=format'
-    ],
-    [
-        'name' => 'Morning Pastry Box',
-        'desc' => 'A curated selection of four freshly baked pastries — different every morning, always made with care.',
-        'price' => '$18.00',
-        'tag' => 'Daily Pick',
-        'img' => 'https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?w=600&h=700&fit=crop&auto=format'
-    ],
-    [
-        'name' => 'Country Sourdough',
-        'desc' => 'Stone-milled flour, wild starter, wood-fired crust. Baked before dawn so it is warm when you arrive.',
-        'price' => '$12.00',
-        'tag' => 'Limited',
-        'img' => 'https://images.unsplash.com/photo-1591458736923-c06a260e3412?w=600&h=700&fit=crop&auto=format'
-    ]
-];
+<?php
+
+require_once __DIR__ . "/db/config.php";
+require_once __DIR__ . "/function.php";
+
+$query = "SELECT * FROM products ORDER BY id DESC";
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Failed to retrieve products: " . mysqli_error($conn));
+}
+
+$products = [];
+
+while ($product = mysqli_fetch_assoc($result)) {
+    $products[] = $product;
+}
+
+$navLinks = ['Menu', 'About', 'Order'];
 
 $values = [
     ['label' => 'Honesty', 'detail' => 'No hidden ingredients. No shortcuts. Just real food.'],
@@ -37,7 +31,24 @@ $testimonials = [
     ['quote' => "Kate's Goodies is the only bakery where I actually feel the love in every single bite. Never going anywhere else.", 'name' => 'Daniel R.', 'role' => 'South Melbourne local'],
     ['quote' => 'I ordered the morning box for my team and everyone went quiet for five minutes. That says everything.', 'name' => 'Priya K.', 'role' => 'Office regular']
 ];
+
+$logged_in = is_logged_in();
+$user = get_logged_in_user();
+
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
+$cart_count = 0;
+
+foreach ($_SESSION['cart'] as $item) {
+    $cart_count += $item['quantity'];
+}
+
 ?>
+```
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,15 +66,144 @@ $testimonials = [
             <span class="brand-name">Kates <span>Goodies</span></span>
         </a>
 
-     <div class="desktop-nav">
+
+<div class="desktop-nav">
+
     <?php foreach ($navLinks as $link): ?>
-        <a href="<?= $link === 'Menu' ? '#menu' : ($link === 'About' ? '#about' : ($link === 'Order' ? '#order' : ($link === 'Login' ? 'login.php' : '#'))) ?>">
+        <a href="<?= $link === 'Menu' ? '#menu' : ($link === 'About' ? '#about' : '#order') ?>">
             <?= htmlspecialchars($link) ?>
         </a>
     <?php endforeach; ?>
 
-    <a href="register.php" class="nav-button">Order Now</a>
+    <?php if ($logged_in): ?>
+
+        <div class="notification-wrapper">
+
+    <button type="button" class="nav-icon notification-button" title="Notifications">
+        🔔
+    </button>
+
+    <div class="notification-panel">
+
+        <div class="notification-header">
+            <h3>Notifications</h3>
+        </div>
+
+        <div class="notification-list">
+
+            <?php
+            $notification_orders = [];
+
+            if ($logged_in) {
+                $stmt = mysqli_prepare(
+                    $conn,
+                    "SELECT id, status, created_at
+                     FROM orders
+                     WHERE user_id = ?
+                     AND status IN ('Approved', 'Ready for Pickup', 'Picked Up', 'Completed', 'Cancelled')
+                     ORDER BY created_at DESC
+                     LIMIT 10"
+                );
+
+                mysqli_stmt_bind_param($stmt, "i", $user['id']);
+                mysqli_stmt_execute($stmt);
+
+                $result = mysqli_stmt_get_result($stmt);
+
+                while ($notification = mysqli_fetch_assoc($result)) {
+                    $notification_orders[] = $notification;
+                }
+
+                mysqli_stmt_close($stmt);
+            }
+            ?>
+
+            <?php if (empty($notification_orders)): ?>
+
+                <div class="no-notifications">
+                    <p>No notifications yet.</p>
+                </div>
+
+            <?php else: ?>
+
+                <?php foreach ($notification_orders as $notification): ?>
+
+                    <?php
+                    $status = $notification["status"];
+
+                    $messages = [
+                        "Approved" => "Your order has been approved.",
+                        "Ready for Pickup" => "Your order is ready for pickup.",
+                        "Picked Up" => "Your order has been picked up.",
+                        "Completed" => "Your order has been completed.",
+                        "Cancelled" => "Your order has been cancelled."
+                    ];
+
+                    $notification_message = $messages[$status] ?? "Your order status has been updated.";
+                    ?>
+
+                    <a
+                        href="order_details.php?id=<?= (int) $notification["id"] ?>"
+                        class="notification-item"
+                    >
+                        <div class="notification-icon">
+                            🔔
+                        </div>
+
+                        <div class="notification-content">
+                            <strong>Order #<?= (int) $notification["id"] ?></strong>
+
+                            <p>
+                                <?= htmlspecialchars($notification_message) ?>
+                            </p>
+
+                            <small>
+                                <?= htmlspecialchars($notification["created_at"]) ?>
+                            </small>
+                        </div>
+                    </a>
+
+                <?php endforeach; ?>
+
+            <?php endif; ?>
+
+        </div>
+
+    </div>
+
 </div>
+
+        <a href="cart.php" class="nav-icon cart-icon" title="Cart">
+            🛒
+            <?php if ($cart_count > 0): ?>
+                <span class="cart-count"><?= $cart_count ?></span>
+            <?php endif; ?>
+        </a>
+
+        <div class="profile-dropdown">
+            <button class="profile-button">
+                <span class="profile-icon">👤</span>
+                <?= htmlspecialchars($user['name']) ?>
+                <span class="dropdown-arrow">▼</span>
+            </button>
+
+            <div class="profile-menu">
+                <a href="profile.php">My Profile</a>
+                <a href="orders.php">My Orders</a>
+                <a href="logout.php">Logout</a>
+            </div>
+        </div>
+
+    <?php else: ?>
+
+        <a href="login.php">Login</a>
+        <a href="register.php" class="nav-button">Order Now</a>
+
+    <?php endif; ?>
+
+</div>
+
+
 
         <input type="checkbox" id="menu-toggle">
         <label for="menu-toggle" class="hamburger" aria-label="Toggle menu">
@@ -73,15 +213,33 @@ $testimonials = [
         </label>
     </div>
 
-  <div class="mobile-nav">
+
+<div class="mobile-nav">
+
     <?php foreach ($navLinks as $link): ?>
-        <a href="<?= $link === 'Menu' ? '#menu' : ($link === 'About' ? '#about' : ($link === 'Order' ? '#order' : ($link === 'Login' ? 'login.php' : '#'))) ?>">
+        <a href="<?= $link === 'Menu' ? '#menu' : ($link === 'About' ? '#about' : '#order') ?>">
             <?= htmlspecialchars($link) ?>
         </a>
     <?php endforeach; ?>
 
-    <a href="register.php" class="nav-button">Order Now</a>
+    <?php if ($logged_in): ?>
+
+        <a href="notifications.php">🔔 Notifications</a>
+        <a href="cart.php">🛒 Cart (<?= $cart_count ?>)</a>
+        <a href="profile.php">👤 My Profile</a>
+        <a href="orders.php">My Orders</a>
+        <a href="logout.php">Logout</a>
+
+    <?php else: ?>
+
+        <a href="login.php">Login</a>
+        <a href="register.php" class="nav-button">Order Now</a>
+
+    <?php endif; ?>
+
 </div>
+
+
 </nav>
 
 <section class="hero">
@@ -139,7 +297,7 @@ $testimonials = [
         <?php foreach ($products as $product): ?>
             <article class="product-card">
                 <div class="product-image">
-                    <img src="<?= htmlspecialchars($product['img']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                    <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                 </div>
                 <div class="product-content">
                     <div class="product-top">
@@ -147,8 +305,28 @@ $testimonials = [
                         <span class="product-price"><?= htmlspecialchars($product['price']) ?></span>
                     </div>
                     <h3><?= htmlspecialchars($product['name']) ?></h3>
-                    <p><?= htmlspecialchars($product['desc']) ?></p>
-                    <button class="add-button">Add to Order</button>
+                    <p><?= htmlspecialchars($product['description']) ?></p>
+                                <?php if ($logged_in): ?>
+
+                        <form action="add_to_cart.php" method="POST">
+                            <input
+                                type="hidden"
+                                name="product_id"
+                                value="<?= $product['id'] ?>"
+                            >
+
+                            <button type="submit" class="add-button">
+                                Add to Cart
+                            </button>
+                        </form>
+
+                    <?php else: ?>
+
+                        <a href="login.php" class="add-button">
+                            Login to Order
+                        </a>
+
+                    <?php endif; ?>
                 </div>
             </article>
         <?php endforeach; ?>
@@ -260,5 +438,6 @@ $testimonials = [
     </div>
 </footer>
 
+<script src="javascript.js"></script>
 </body>
 </html>
